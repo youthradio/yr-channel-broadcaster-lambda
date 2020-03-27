@@ -1,0 +1,23 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "backend": "nodemon app.local.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@popeindustries/lit-html-server": "^3.0.0",
+    "aws-sdk": "^2.639.0",
+    "aws-serverless-express": "^3.3.8",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.0",
+    "punycode": "^2.1.1",
+    "slack-message-parser": "^1.0.6"
+  }
+}
