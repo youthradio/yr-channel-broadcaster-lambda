@@ -3,11 +3,13 @@ const cors = require('cors');
 const punycode = require('punycode');
 const fetch = require('node-fetch');
 const slackParser = require('slack-message-parser');
-const { html, renderToStream } = require('@popeindustries/lit-html-server');
+const { html, renderToStream, renderToString} = require('@popeindustries/lit-html-server');
 const emojiList = require('./emoji.json');
 const credentials = require('./credentials');
 
 const NodeType = slackParser.NodeType;
+
+const maxMsg = 15;
 
 const getProfiles = () => {
   return fetch(
@@ -90,7 +92,7 @@ app.get('/', (req, res) => {
   res.send('Nothing here');
 });
 
-app.get('/list', async (req, res, next) => {
+app.get('/html', async (req, res, next) => {
   try {
     const [conversations, profiles] = await Promise.all([
       getConversations(),
@@ -106,7 +108,7 @@ app.get('/list', async (req, res, next) => {
     const out = html`
   <ol>
   ${conversations.messages
-    .slice(0, 20)
+    .slice(0, maxMsg)
     .reverse()
     .map(msg => {
       return html`
@@ -130,6 +132,34 @@ app.get('/list', async (req, res, next) => {
   `;
     res.setHeader('content-type', 'text/html; charset=utf-8');
     renderToStream(out).pipe(res);
+  } catch (err) {
+    console.warn('ERRORRRRRR', err);
+    next(err);
+    return;
+  }
+});
+
+app.get('/json', async (req, res, next) => {
+  try {
+    const [conversations, profiles] = await Promise.all([
+      getConversations(),
+      getProfiles()
+    ]);
+
+    const usersInConversation = conversations.messages.map(msg => msg.user);
+    const profilesList = new Map(
+      profiles.members
+        .filter(user => usersInConversation.includes(user.id))
+        .map(e => [e.id, e])
+    );
+
+    const out = await Promise.all(conversations.messages.slice(0, maxMsg).map(async msg => ({
+      profile_image: profilesList.get(msg.user).profile.image_192,
+      display_name: profilesList.get(msg.user).profile.display_name,
+      msg_html: (await renderToString(stringifyNode(slackParser.parse(msg.text))))
+    })));
+
+    res.json(out);
   } catch (err) {
     console.warn('ERRORRRRRR', err);
     next(err);
