@@ -3,9 +3,16 @@
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
+  "files": [
+    "*.js",
+    "*.json"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "backend": "nodemon app.local.js"
+    "backend": "nodemon app.local.js",
+    "claudia:update": "AWS_PROFILE=yri claudia update",
+    "claudia:deploy": "AWS_PROFILE=yri claudia create --handler lambda.handler --deploy-proxy-api --region us-west-2",
+    "generate-proxy": "claudia generate-serverless-express-proxy --express-module app"
   },
   "author": "",
   "license": "ISC",
@@ -18,5 +25,8 @@
     "node-fetch": "^2.6.0",
     "punycode": "^2.1.1",
     "slack-message-parser": "^1.0.6"
+  },
+  "devDependencies": {
+    "claudia": "^5.12.0"
   }
 }
