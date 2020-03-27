@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const punycode = require('punycode');
@@ -6,27 +5,34 @@ const fetch = require('node-fetch');
 const slackParser = require('slack-message-parser');
 const { html, renderToStream } = require('@popeindustries/lit-html-server');
 const emojiList = require('./emoji.json');
+const credentials = require('./credentials');
 
-const TOKEN = process.env.SLACK_TOKEN;
-const CHANNELID = process.env.CHANNEL;
 const NodeType = slackParser.NodeType;
 
-const getProfiles = async () => {
+const getProfiles = () => {
   return fetch(
-    `https://slack.com/api/users.list?token=${TOKEN}&usergroup=SV17T0B33`,
-    { timeout: 5000 }
+    `https://slack.com/api/users.list?token=${credentials.slacktoken}`,
+    {
+      timeout: 5000
+    }
   )
     .then(r => r.json())
-    .catch(err => err);
+    .catch(err => {
+      console.warn('ERROR getting Profiles', err);
+      throw err;
+    });
 };
 
-const getConversations = async () => {
+const getConversations = () => {
   return fetch(
-    `https://slack.com/api/conversations.history?token=${TOKEN}&channel=${CHANNELID}&limit=20`,
+    `https://slack.com/api/conversations.history?token=${credentials.slacktoken}&channel=${credentials.channelid}&limit=20`,
     { timeout: 5000 }
   )
     .then(r => r.json())
-    .catch(err => err);
+    .catch(err => {
+      console.warn('ERROR getting Conversations', err);
+      throw err;
+    });
 };
 
 const convertEmoji = emoji_name => {
@@ -86,8 +92,11 @@ app.get('/', (req, res) => {
 
 app.get('/list', async (req, res, next) => {
   try {
-    const conversations = await getConversations();
-    const profiles = await getProfiles();
+    const [conversations, profiles] = await Promise.all([
+      getConversations(),
+      getProfiles()
+    ]);
+
     const usersInConversation = conversations.messages.map(msg => msg.user);
     const profilesList = new Map(
       profiles.members
@@ -122,6 +131,7 @@ app.get('/list', async (req, res, next) => {
     res.setHeader('content-type', 'text/html; charset=utf-8');
     renderToStream(out).pipe(res);
   } catch (err) {
+    console.warn('ERRORRRRRR', err);
     next(err);
     return;
   }
