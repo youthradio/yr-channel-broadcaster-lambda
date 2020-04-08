@@ -5,7 +5,8 @@
   "main": "app.js",
   "files": [
     "*.js",
-    "*.json"
+    "*.json",
+    ".env"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
